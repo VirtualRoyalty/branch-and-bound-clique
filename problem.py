@@ -116,20 +116,20 @@ class ProblemHandler:
 
     # TODO: deprecate this func
     @staticmethod
-    def get_independent_sets(graph: nx.Graph, strategies: list) -> list:
+    def get_independent_sets(graph: nx.Graph, strategies: list, min_set_size: int = 3) -> list:
         independent_sets = []
         for strategy in strategies:
             vertex_color_dict = nx.coloring.greedy_color(graph, strategy=strategy)
             unique_colors = set(color for node, color in vertex_color_dict.items())
             for color in unique_colors:
                 color_set = tuple(sorted([int(key) for key, value in vertex_color_dict.items() if value == color]))
-                if len(color_set) > 2:
+                if len(color_set) >= min_set_size:
                     independent_sets.append(color_set)
         independent_sets = list(set(independent_sets))
         return independent_sets
 
     @staticmethod
-    def get_independent_sets_new(graph: nx.Graph, strategies: list) -> list:
+    def get_independent_sets_new(graph: nx.Graph, strategies: list, min_set_size: int = 3) -> list:
         independent_sets = set()
         for strategy in strategies:
             vertex_color_dct = nx.coloring.greedy_color(graph, strategy=strategy)
@@ -144,7 +144,7 @@ class ProblemHandler:
                     color_set_dct[color] = [node]
 
             for color, color_set in color_set_dct.items():
-                if len(color_set) > 2:
+                if len(color_set) >= min_set_size:
                     sorted_color_set = tuple(sorted(color_set))
                     independent_sets.add(sorted_color_set)
         independent_sets = list(independent_sets)
