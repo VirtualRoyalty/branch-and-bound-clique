@@ -86,7 +86,7 @@ class BranchAndBound:
                         return branching_var_index
             diff_to_int = min(abs(1 - value), abs(value))
             if diff_to_int <= min_diff_to_int:
-                if self.constrained_vars[i] != 1 and self.constrained_count[i] > 0:
+                if self.constrained_vars[i] != 1:
                     min_diff_to_int = diff_to_int
                     branching_var_index = i
         return branching_var_index
