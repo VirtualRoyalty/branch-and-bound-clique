@@ -59,7 +59,7 @@ class ProblemHandler:
 
         # get not connected edges and list of independent sets
         not_connected = self.get_complement_edges(self.graph)
-        independent_sets = self.get_independent_sets_new(self.graph, strategies=self.STRATEGIES)
+        independent_sets = self.get_independent_sets(self.graph, strategies=self.STRATEGIES)
 
         # define num of decision vars by num of nodes
         # and num of constraints as num of not connected edges + num of found ind sets
@@ -116,7 +116,7 @@ class ProblemHandler:
 
     # TODO: deprecate this func
     @staticmethod
-    def get_independent_sets(graph: nx.Graph, strategies: list, min_set_size: int = 3) -> list:
+    def get_independent_sets_deprecated(graph: nx.Graph, strategies: list, min_set_size: int = 3) -> list:
         independent_sets = []
         for strategy in strategies:
             vertex_color_dict = nx.coloring.greedy_color(graph, strategy=strategy)
@@ -129,7 +129,7 @@ class ProblemHandler:
         return independent_sets
 
     @staticmethod
-    def get_independent_sets_new(graph: nx.Graph, strategies: list, min_set_size: int = 3) -> list:
+    def get_independent_sets(graph: nx.Graph, strategies: list, min_set_size: int = 3) -> list:
         independent_sets = set()
         for strategy in strategies:
             vertex_color_dct = nx.coloring.greedy_color(graph, strategy=strategy)
