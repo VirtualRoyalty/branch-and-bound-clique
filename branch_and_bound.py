@@ -68,7 +68,8 @@ class BranchAndBound:
             self.constrained_vars[branching_var_index] = 0
             self.constraint_size -= 1
             # print('Deleted:', constraint_name)
-        self.constrained_count[branching_var_index] -= 1
+        if self.constrained_count[branching_var_index] > 0:
+            self.constrained_count[branching_var_index] -= 1
         return
 
     def choose_branching_variable(self, solution_values) -> int:
