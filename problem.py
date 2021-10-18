@@ -12,7 +12,8 @@ class ProblemHandler:
         nx.coloring.strategy_independent_set,
         nx.coloring.strategy_connected_sequential_bfs,
         nx.coloring.strategy_connected_sequential_dfs,
-        nx.coloring.strategy_saturation_largest_first
+        nx.coloring.strategy_saturation_largest_first,
+        # nx.coloring.strategy_smallest_last
     ]
 
     def __init__(self, graph: nx.Graph, is_integer: bool = False):
@@ -113,20 +114,6 @@ class ProblemHandler:
         complement_edges = list(zip(pairs[0] + 1, pairs[1] + 1))
         # print(len(complement_edges))
         return complement_edges
-
-    # TODO: deprecate this func
-    @staticmethod
-    def get_independent_sets_deprecated(graph: nx.Graph, strategies: list, min_set_size: int = 3) -> list:
-        independent_sets = []
-        for strategy in strategies:
-            vertex_color_dict = nx.coloring.greedy_color(graph, strategy=strategy)
-            unique_colors = set(color for node, color in vertex_color_dict.items())
-            for color in unique_colors:
-                color_set = tuple(sorted([int(key) for key, value in vertex_color_dict.items() if value == color]))
-                if len(color_set) >= min_set_size:
-                    independent_sets.append(color_set)
-        independent_sets = list(set(independent_sets))
-        return independent_sets
 
     @staticmethod
     def get_independent_sets(graph: nx.Graph, strategies: list, min_set_size: int = 3) -> list:

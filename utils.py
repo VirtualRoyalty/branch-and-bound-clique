@@ -4,6 +4,17 @@ import networkx as nx
 import argparse
 
 
+def is_clique(graph: nx.Graph, nodes: list) -> bool:
+    subgraph: nx.Graph = graph.subgraph(nodes)
+    num_of_nodes = subgraph.number_of_nodes()
+    num_of_edges = subgraph.number_of_edges()
+    num_of_edges_complete = int(num_of_nodes * (num_of_nodes-1) / 2)
+    print(f'Nodes: {num_of_nodes} Edges: {num_of_edges} Complete: {num_of_edges_complete}')
+    if num_of_edges == num_of_edges_complete:
+        return True
+    return False
+
+
 def read_graph_file(file_path, verbose=True):
     edges = []
     file = open(file_path, 'r')

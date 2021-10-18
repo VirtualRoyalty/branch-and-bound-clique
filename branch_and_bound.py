@@ -16,7 +16,7 @@ class BranchAndBound:
         self.node_indexes = list(range(num_of_nodes))
         self.constrained_vars = np.zeros(num_of_nodes, dtype=np.bool)
         # self.constrained_count = np.zeros(num_of_nodes, dtype=np.int)
-        self.constrained_count = np.array([self.num_of_nodes]*self.num_of_nodes, dtype=np.int)
+        self.constrained_count = np.array([self.num_of_nodes] * self.num_of_nodes, dtype=np.int)
         self.constraint_size = 0
         self.abs_tol = 0.0001
         pass
@@ -39,7 +39,13 @@ class BranchAndBound:
             # print('Constraint count:', self.constrained_count)
         # print('Solution:', current_solution)
         if is_all_integer(current_solution, abs_tol=self.abs_tol):
+            clique_nodes = [var_index + 1 for var_index, var in enumerate(current_solution) if var >= 0.98]
+            is_clique = utils.is_clique(problem.graph, clique_nodes)
+            print('IS CLIQUE?:', is_clique)
+            if not is_clique:
+                return
             print('NEW BEST SOLUTION', current_obj_value, current_solution)
+            print('BEST BNB SOLUTION', [f'x{x}' for x in clique_nodes])
             print('Constraint size:', self.constraint_size)
             self.best_solution = current_solution
             self.best_obj_value = current_obj_value
@@ -49,7 +55,7 @@ class BranchAndBound:
         if not branching_var_index:
             return
         # print('Constraint set:', self.constraint_vars_set)
-        branching_var = f'x{branching_var_index+1}'
+        branching_var = f'x{branching_var_index + 1}'
         if abs(1.0 - current_solution[branching_var_index]) < abs(current_solution[branching_var_index]):
             branch_order = [1, 0]
         else:
@@ -77,11 +83,10 @@ class BranchAndBound:
         branching_var_index = None
         min_diff_to_int = 1000
         for i, value in enumerate(solution_values):
-            if np.random.randint(0, self.num_of_nodes//2) == 1:
+            if np.random.randint(0, self.num_of_nodes // 2) == 1:
                 _sum = self.constrained_count.sum()
                 if _sum > 0:
-                    random_i = np.random.choice(self.node_indexes,
-                                                p=self.constrained_count / _sum)
+                    random_i = np.random.choice(self.node_indexes, p=self.constrained_count / _sum)
                     if self.constrained_vars[random_i] != 1 and self.constrained_count[random_i] > 0:
                         branching_var_index = random_i
                         return branching_var_index
@@ -107,25 +112,38 @@ def is_integer(var, abs_tol=0.001):
 
 
 if __name__ == '__main__':
-    args = utils.main_arg_parser()
-    filepath = args.filepath  # 'benchmarks/DIMACS_all_ascii/C125.9.clq'
+    # args = utils.main_arg_parser()
+    # filepath = args.filepath  # 'benchmarks/DIMACS_all_ascii/C125.9.clq'
+    from run_test import *
+    benches = list(EASY.items())
+    i = 4
+    filepath = benches[i][0]
     G = utils.read_graph_file(filepath)
+    print(f'G.nodes: {sorted(G.nodes())}')
     problem_handler = ProblemHandler(graph=G)
     problem_handler.design_problem()
     max_clique_problem = problem_handler.constructed_problem
-    if not args.verbose:
+    if True: #not args.verbose:
         max_clique_problem.set_log_stream(None)
         max_clique_problem.set_results_stream(None)
         max_clique_problem.set_warning_stream(None)
         max_clique_problem.set_error_stream(None)
     print(f'Problem constructed for {filepath}!')
-    bnb_algorithm = BranchAndBound(best_obj_value=4, num_of_nodes=problem_handler.graph.number_of_nodes())
+    print('true clique:', benches[i][1])
+    start_clique_size = max(benches[i][1]-5, 1)
+    print('start clique:', start_clique_size)
+    bnb_algorithm = BranchAndBound(best_obj_value=start_clique_size,
+                                   num_of_nodes=problem_handler.graph.number_of_nodes())
     tic = time.perf_counter()
     bnb_algorithm.run(problem_handler)
     toc = time.perf_counter()
     time_lst = [toc - tic]
+    print('*'*50)
     print('BEST BNB OBJ VALUE', bnb_algorithm.best_obj_value)
     print('BEST BNB SOLUTION', bnb_algorithm.best_solution)
+    clique_nodes = [var_index+1 for var_index, var in enumerate(bnb_algorithm.best_solution) if var >= 0.9]
+    print('BEST BNB SOLUTION', [f'x{x}' for x in clique_nodes])
+    print('Is clique?', utils.is_clique(G, clique_nodes))
 
     # # solve problem
     # print('Start solving...')
