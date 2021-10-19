@@ -1,14 +1,20 @@
 import time
+import math
 import functools
 import networkx as nx
 import argparse
+
+
+def to_node_indexes(solution, abs_tol=1e-5):
+    return [var_index + 1 for var_index, var in enumerate(solution)
+            if math.isclose(var, 1, abs_tol=abs_tol)]
 
 
 def is_clique(graph: nx.Graph, nodes: list) -> bool:
     subgraph: nx.Graph = graph.subgraph(nodes)
     num_of_nodes = subgraph.number_of_nodes()
     num_of_edges = subgraph.number_of_edges()
-    num_of_edges_complete = int(num_of_nodes * (num_of_nodes-1) / 2)
+    num_of_edges_complete = int(num_of_nodes * (num_of_nodes - 1) / 2)
     print(f'Nodes: {num_of_nodes} Edges: {num_of_edges} Complete: {num_of_edges_complete}')
     if num_of_edges == num_of_edges_complete:
         return True
