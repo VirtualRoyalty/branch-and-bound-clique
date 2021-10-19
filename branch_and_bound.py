@@ -53,10 +53,9 @@ class BranchAndBound:
             print('IS CLIQUE?:', is_clique)
             if not is_clique:
                 return
-            # print('NEW BEST SOLUTION', current_obj_value, current_solution)
+            print('NEW BEST SOLUTION', current_obj_value) #, current_solution)
             print('NEW BEST SOLUTION', [f'x{x}' for x in clique_nodes])
             print('Constraint size:', self.constraint_size)
-            # print('----'*30)
             self.best_solution = current_solution
             self.best_obj_value = current_obj_value
             return
