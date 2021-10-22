@@ -116,14 +116,14 @@ class ProblemHandler:
     def filter_repeated(pairs, ind_sets, filtered_limit: int = 500000) -> list:
         new_pairs = []
         for _iter, pair in enumerate(pairs):
-            _flag = True
+            absence_flag = True
             if _iter < filtered_limit:
                 for ind_set in ind_sets:
                     if pair[0] in ind_set:
                         if pair[1] in ind_set:
-                            _flag = False
+                            absence_flag = False
                             break
-            if _flag:
+            if absence_flag:
                 new_pairs.append(pair)
         return new_pairs
 

@@ -6,6 +6,7 @@ import networkx as nx
 
 
 def to_node_indexes(solution: list, abs_tol: float = 1e-5) -> list:
+    # transform [1, 0,  1,... 1] to [1, 3, ... 10]
     return [var_index + 1 for var_index, var in enumerate(solution)
             if math.isclose(var, 1, abs_tol=abs_tol)]
 

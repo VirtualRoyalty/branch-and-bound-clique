@@ -37,7 +37,6 @@ class BranchAndBound:
             current_obj_value = self.problem.solve_problem()
         except cplex.exceptions.CplexSolverError as error:
             print(error)
-            print(f'Elapsed: {(time.perf_counter() - self.start_time) // 60}min')
             return
         if int(current_obj_value + self.abs_tol) <= self.best_obj_value:
             return

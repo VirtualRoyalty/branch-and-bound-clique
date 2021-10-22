@@ -1,7 +1,7 @@
 import numpy as np
 import networkx as nx
-from utils import *
-from run_test import *
+from utils import read_graph_file
+from benchmarks import EASY, MEDIUM, HARD
 from problem import ProblemHandler
 
 
@@ -29,7 +29,7 @@ class HeuristicMaxClique:
                 for i in range(self.graph.number_of_nodes())]
 
     @staticmethod
-    def color_first_randomized(graph: nx.Graph, n_iterations: int = 10,
+    def color_first_randomized(graph: nx.Graph, n_iterations: int = 15,
                                strategy=nx.coloring.strategy_random_sequential) -> set:
         best_clique = set()
         best_clique_size = 0
@@ -47,18 +47,6 @@ class HeuristicMaxClique:
                 best_clique = clique
                 best_clique_size = len(clique)
         return best_clique
-
-    @staticmethod
-    def largest_first(graph: nx.Graph, **kwargs) -> set:
-        clique = set()
-        degrees = nx.degree(graph)
-        nodes = [node[0] for node in sorted(degrees, key=lambda x: x[1], reverse=True)]
-        first_index = 0
-        while len(nodes) > 0:
-            neighbors = list(graph.neighbors(nodes[first_index]))
-            clique.add(nodes[first_index])
-            nodes = list(filter(lambda x: x in neighbors, nodes))
-        return clique
 
     @staticmethod
     def largest_first_randomized(graph: nx.Graph, n_iterations: int = 50,
@@ -80,10 +68,16 @@ class HeuristicMaxClique:
 
 
 def test_max_clique_heuristic():
-    benches = {**EASY, **MEDIUM, **HARD}
-    for bench in benches:
-        G = read_graph_file(bench, verbose=False)
+    benches = {**EASY,
+               **MEDIUM,
+               **HARD}
+    for filepath in benches:
+        G = read_graph_file(filepath, verbose=False)
         heuristic = HeuristicMaxClique(G)
         found_clique = heuristic.run()
-        print(f'Bench: {bench}')
-        print(f'Found clique: {sum(found_clique)} True clique: {benches[bench]}')
+        print(f'Bench: {filepath}')
+        print(f'Found clique: {sum(found_clique)} True clique: {benches[filepath]}')
+
+
+if __name__ == '__main__':
+    test_max_clique_heuristic()
