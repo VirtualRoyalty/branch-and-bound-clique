@@ -1,7 +1,6 @@
 import cplex
 import numpy as np
 import networkx as nx
-import utils
 
 
 class ProblemHandler:
@@ -11,9 +10,7 @@ class ProblemHandler:
         nx.coloring.strategy_random_sequential,
         nx.coloring.strategy_independent_set,
         nx.coloring.strategy_connected_sequential_bfs,
-        nx.coloring.strategy_connected_sequential_dfs,
         nx.coloring.strategy_saturation_largest_first,
-        nx.coloring.strategy_smallest_last
     ]
 
     def __init__(self, graph: nx.Graph, is_integer: bool = False, verbose: bool = False):
@@ -34,17 +31,18 @@ class ProblemHandler:
         else:
             raise "Problem is not constructed yet"
 
-    def get_solution(self) -> dict:
+    def get_solution(self) -> list:
         if self.problem:
             return self.problem.solution.get_values()
         else:
             raise "Problem is not constructed yet"
 
-    def add_integer_constraint(self, variable, constraint_name, right_hand_side=1.0):
-        constraint = [[variable], [1.0]]
+    def add_integer_constraint(self, var_name: str, constraint_name: str,
+                               rhs: float = 1.0):
+        constraint = [[var_name], [1.0]]
         if self.problem:
             self.problem.linear_constraints.add(lin_expr=[constraint], senses=['E'],
-                                                rhs=[right_hand_side], names=[constraint_name])
+                                                rhs=[rhs], names=[constraint_name])
             return
         else:
             raise "Problem is not constructed yet"
@@ -102,7 +100,7 @@ class ProblemHandler:
         return
 
     def set_verbosity(self):
-        if not self.verbose:  # not args.verbose:
+        if not self.verbose:
             self.problem.set_log_stream(None)
             self.problem.set_results_stream(None)
             self.problem.set_warning_stream(None)
@@ -115,22 +113,27 @@ class ProblemHandler:
         adj_matrix = np.triu(adj_matrix, k=1)
         pairs = np.where(adj_matrix == 1)
         complement_edges = list(zip(pairs[0] + 1, pairs[1] + 1))
-        # print(len(complement_edges))
         return complement_edges
 
     @staticmethod
-    def get_independent_sets(graph: nx.Graph, strategies: list, min_set_size: int = 3) -> list:
+    def get_independent_sets(graph: nx.Graph, strategies: list,
+                             n_iter: int = 50, min_set_size: int = 3) -> list:
         independent_sets = set()
         for strategy in strategies:
-            coloring_dct = nx.coloring.greedy_color(graph, strategy=strategy)
-            color2nodes = dict()
-            for node, color in coloring_dct.items():
-                if color not in color2nodes:
-                    color2nodes[color] = []
-                color2nodes[color].append(node)
-            for color, colored_nodes in color2nodes.items():
-                if len(colored_nodes) >= min_set_size:
-                    colored_nodes = tuple(sorted(colored_nodes))
-                    independent_sets.add(colored_nodes)
+            if strategy == nx.coloring.strategy_random_sequential:
+                _n_iter = n_iter
+            else:
+                _n_iter = 1
+            for _ in range(_n_iter):
+                coloring_dct = nx.coloring.greedy_color(graph, strategy=strategy)
+                color2nodes = dict()
+                for node, color in coloring_dct.items():
+                    if color not in color2nodes:
+                        color2nodes[color] = []
+                    color2nodes[color].append(node)
+                for color, colored_nodes in color2nodes.items():
+                    if len(colored_nodes) >= min_set_size:
+                        colored_nodes = tuple(sorted(colored_nodes))
+                        independent_sets.add(colored_nodes)
         independent_sets = list(independent_sets)
         return independent_sets

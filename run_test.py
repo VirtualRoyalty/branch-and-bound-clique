@@ -1,22 +1,31 @@
-# from main import *
+import pandas as pd
+
+from main import *
+from branch_and_bound import *
+from utils import *
+from heuristic import *
 
 EASY = {
     'benchmarks/DIMACS_all_ascii/johnson8-2-4.clq': 4,
     'benchmarks/DIMACS_all_ascii/johnson16-2-4.clq': 8,
     'benchmarks/DIMACS_all_ascii/MANN_a9.clq': 16,
     'benchmarks/DIMACS_all_ascii/keller4.clq': 11,
+    'benchmarks/DIMACS_all_ascii/c-fat200-1.clq': None,
+    'benchmarks/DIMACS_all_ascii/c-fat500-1.clq': None,
+    'benchmarks/DIMACS_all_ascii/c-fat500-10.clq': None,
+    'benchmarks/DIMACS_all_ascii/c-fat200-2.clq': None,
     'benchmarks/DIMACS_all_ascii/hamming8-4.clq': 16,
 }
 
 MEDIUM = {
-    'benchmarks/DIMACS_all_ascii/C125.9.clq': 34,
-    'benchmarks/DIMACS_all_ascii/gen200_p0.9_44.clq': 44,
     'benchmarks/DIMACS_all_ascii/gen200_p0.9_55.clq': 55,
-    'benchmarks/DIMACS_all_ascii/brock200_1.clq': 21,
+    'benchmarks/DIMACS_all_ascii/gen200_p0.9_44.clq': 44,
+    'benchmarks/DIMACS_all_ascii/C125.9.clq': 34,
     'benchmarks/DIMACS_all_ascii/brock200_2.clq': 12,
     'benchmarks/DIMACS_all_ascii/brock200_3.clq': 15,
     'benchmarks/DIMACS_all_ascii/brock200_4.clq': 17,
-    # 'benchmarks/DIMACS_all_ascii/p_hat1000-1.clq': 10,
+    'benchmarks/DIMACS_all_ascii/brock200_1.clq': 21,
+    'benchmarks/DIMACS_all_ascii/p_hat1000-1.clq': 10,
     # 'benchmarks/DIMACS_all_ascii/san1000.clq': 15,
 }
 
@@ -35,38 +44,58 @@ HARD = {
     'benchmarks/DIMACS_all_ascii/p_hat300-3.clq': 36,
 }
 
-# def run_tests(benchmarks: list):
-#     total_time = 0
-#     method_dct = {False: 'LP', True: 'ILP'}
-#     for filepath in benchmarks:
-#         try:
-#             graph = utils.read_graph_file(filepath, verbose=False)
-#         except Exception as e:
-#             print(e)
-#             continue
-#         for is_integer in [False, True]:
-#             max_clique_problem = design_problem(graph, is_integer=is_integer)
-#             max_clique_problem.set_log_stream(None)
-#             max_clique_problem.set_results_stream(None)
-#             max_clique_problem.set_warning_stream(None)
-#             print(f'Problem constructed for {filepath}!')
-#
-#             print(f'Start solving {method_dct[is_integer]}...')
-#             time_lst = solve_problem(max_clique_problem)
-#             solution = max_clique_problem.solution.get_values()
-#             obj_value = max_clique_problem.solution.get_objective_value()
-#             print(f'Found max clique size (obj func value): {obj_value}')
-#             print(*[f'x{i}={value:.2f}' for i, value in enumerate(solution) if value != 0])
-#             mean_time = np.mean(time_lst)
-#             total_time += mean_time
-#             mins, secs = divmod(mean_time, 60)
-#             print(f'Execution time: {mins:.0f}min {secs:.1f}sec')
-#             print(f'for {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges')
-#             print(f'And clique of size {benchmarks[filepath]}!\n')
-#
-#     mins, secs = divmod(total_time, 60)
-#     print(f"\n\n*****Total time is {mins:.1f}min {secs:.1f}sec ******")
-#
-#
-# if __name__ == '__main__':
-#     run_tests(MEDIUM)
+
+def run_test(benchmark: str, abs_tol: float = 1e-4, time_limit: int = None):
+    print(f'{benchmark} started...')
+    graph = read_graph_file(benchmark, verbose=False)
+    problem_handler = ProblemHandler(graph=graph)
+    problem_handler.design_problem()
+    print('Problem constructed!')
+    heuristic = HeuristicMaxClique(graph)
+    heuristic_clique = heuristic.run()
+    heuristic_clique_size = int(sum(heuristic_clique))
+    print(f'Found heuristic solution! ({heuristic_clique_size})')
+    bnb_algorithm = BranchAndBound(problem=problem_handler,
+                                   initial_solution=heuristic_clique, time_limit=time_limit,
+                                   initial_obj_value=heuristic_clique_size, abs_tol=abs_tol)
+    exec_time = bnb_algorithm.timed_run()
+    clique_nodes = to_node_indexes(bnb_algorithm.best_solution)
+    _minutes, _seconds = divmod(exec_time, 60)
+    _result = dict(benchmark=benchmark.split('/')[-1],
+                   heuristic_clique_size=heuristic_clique_size,
+                   bnb_clique_size=bnb_algorithm.best_obj_value,
+                   is_bnb_solution_clique=is_clique(graph, clique_nodes),
+                   bnb_exec_time=f'{_minutes:.0f}min {_seconds:.1f}sec',
+                   bnb_exec_time_seconds=exec_time,
+                   bnb_call_count=bnb_algorithm.call_counter,
+                   bnb_max_recursion_depth=bnb_algorithm.max_recursion_depth,
+                   )
+    return _result
+
+
+def run_tests(benchmarks: list, time_limit: int = None, abs_tol: float = 1e-4,
+              out_folder: str = 'results/', suffix: str = ''):
+    results = []
+    for filepath in benchmarks:
+        try:
+            result_dct = run_test(filepath, abs_tol=abs_tol, time_limit=time_limit)
+        except TimeoutException as timeout:
+            print(filepath, timeout.msg)
+            results.append(dict(benchmark=filepath.split('/')[-1],
+                                bnb_exec_time=timeout.msg,
+                                bnb_clique_size=timeout.best_clique_size))
+            continue
+        result_dct['true_clique_size'] = benchmarks[filepath]
+        print(result_dct)
+        results.append(result_dct)
+        result_df = pd.DataFrame(results)
+        result_df.to_csv(out_folder + f'results_{suffix}.csv')
+        result_df.to_excel(out_folder + f'results_{suffix}.xlsx')
+    return
+
+
+if __name__ == '__main__':
+    benchmarks = dict(**EASY,
+                      **MEDIUM
+                      )
+    run_tests(benchmarks=benchmarks, time_limit=3600, suffix='EASY_MEDIUM')
