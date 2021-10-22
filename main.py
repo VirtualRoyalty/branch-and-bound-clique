@@ -1,4 +1,5 @@
-from run_test import *
+import utils
+from run_test import run_test
 
 
 if __name__ == '__main__':
