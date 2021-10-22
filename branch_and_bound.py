@@ -35,7 +35,9 @@ class BranchAndBound:
         self.call_counter += 1
         try:
             current_obj_value = self.problem.solve_problem()
-        except cplex.exceptions.CplexSolverError:
+        except cplex.exceptions.CplexSolverError as error:
+            print(error)
+            print(f'Elapsed: {(time.perf_counter() - self.start_time) // 60}min')
             return
         if int(current_obj_value + self.abs_tol) <= self.best_obj_value:
             return
@@ -45,6 +47,7 @@ class BranchAndBound:
             is_clique = utils.is_clique(self.problem.graph, clique_nodes)
             if not is_clique:
                 return
+            print(f'Found new best: {round(current_obj_value)}')
             self.best_solution = current_solution
             self.best_obj_value = round(current_obj_value)
             return
@@ -56,7 +59,7 @@ class BranchAndBound:
                                              msg=f'TIMEOUT: >{round(elapsed_time)}s elapsed')
 
         branching_var_index = self.select_branching_var(current_solution)
-        if not branching_var_index:
+        if branching_var_index is None:
             return
         branching_var_name = f'x{branching_var_index + 1}'
         rounded_value = round(current_solution[branching_var_index])
@@ -78,10 +81,6 @@ class BranchAndBound:
     def select_branching_var(self, solution: list) -> int:
         selected_var_index = None
         min_diff_to_int = 2
-        if np.random.randint(0, 1000) == 0:
-            random_i = np.random.randint(0, self.num_of_nodes)
-            if self.constrained_vars[random_i] != 1:
-                return random_i
         for _index, value in enumerate(solution):
             if self.constrained_vars[_index] != 1:
                 diff_to_int = abs(1 - value)

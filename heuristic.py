@@ -24,24 +24,24 @@ class HeuristicMaxClique:
                 if best_clique_size < len(found_clique):
                     best_clique_size = len(found_clique)
                     best_clique = found_clique
+        # return result in a form [0, 1, 0..., 0]
         return [1.0 if i + 1 in best_clique else 0.0
                 for i in range(self.graph.number_of_nodes())]
 
     @staticmethod
-    def color_first_randomized(graph: nx.Graph, n_iterations: int = 20, k_first: int = 3,
-                               strategy=nx.coloring.strategy_random_sequential):
-
-        coloring_dct = nx.coloring.greedy_color(graph, strategy=strategy)
-        sorted_coloring = sorted(coloring_dct.items(), key=lambda item: item[1], reverse=True)
-        nodes = [node for node, color in sorted_coloring]
+    def color_first_randomized(graph: nx.Graph, n_iterations: int = 10,
+                               strategy=nx.coloring.strategy_random_sequential) -> set:
         best_clique = set()
         best_clique_size = 0
         for _ in range(n_iterations):
+            coloring_dct = nx.coloring.greedy_color(graph, strategy=strategy)
+            sorted_coloring = sorted(coloring_dct.items(), key=lambda item: item[1], reverse=True)
+            nodes = [node for node, color in sorted_coloring]
             clique = set()
+            first_index = 0
             while len(nodes) > 0:
-                random_index = np.random.randint(0, min(k_first, len(nodes)))
-                neighbors = list(graph.neighbors(nodes[random_index]))
-                clique.add(nodes[random_index])
+                neighbors = list(graph.neighbors(nodes[first_index]))
+                clique.add(nodes[first_index])
                 nodes = list(filter(lambda x: x in neighbors, nodes))
             if len(clique) > best_clique_size:
                 best_clique = clique
@@ -49,7 +49,7 @@ class HeuristicMaxClique:
         return best_clique
 
     @staticmethod
-    def largest_first(graph: nx.Graph, **kwargs):
+    def largest_first(graph: nx.Graph, **kwargs) -> set:
         clique = set()
         degrees = nx.degree(graph)
         nodes = [node[0] for node in sorted(degrees, key=lambda x: x[1], reverse=True)]
@@ -62,7 +62,7 @@ class HeuristicMaxClique:
 
     @staticmethod
     def largest_first_randomized(graph: nx.Graph, n_iterations: int = 50,
-                                 k_first: int = 5, **kwargs):
+                                 k_first: int = 5, **kwargs) -> set:
         best_clique = None
         best_clique_size = 0
         for _ in range(n_iterations):

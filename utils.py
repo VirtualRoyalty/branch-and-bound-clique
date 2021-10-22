@@ -1,10 +1,8 @@
 import time
 import math
-import functools
-
-import networkx
-import networkx as nx
 import argparse
+import functools
+import networkx as nx
 
 
 def to_node_indexes(solution: list, abs_tol: float = 1e-5) -> list:

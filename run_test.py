@@ -1,9 +1,9 @@
 import pandas as pd
+from pprint import pprint
 
-from main import *
 from branch_and_bound import *
 from utils import *
-from heuristic import *
+from heuristic import HeuristicMaxClique
 
 EASY = {
     'benchmarks/DIMACS_all_ascii/johnson8-2-4.clq': 4,
@@ -26,7 +26,7 @@ MEDIUM = {
     'benchmarks/DIMACS_all_ascii/brock200_4.clq': 17,
     'benchmarks/DIMACS_all_ascii/brock200_1.clq': 21,
     'benchmarks/DIMACS_all_ascii/p_hat1000-1.clq': 10,
-    # 'benchmarks/DIMACS_all_ascii/san1000.clq': 15,
+    'benchmarks/DIMACS_all_ascii/san1000.clq': 15,
 }
 
 HARD = {
@@ -53,7 +53,7 @@ def run_test(benchmark: str, abs_tol: float = 1e-4, time_limit: int = None):
     print('Problem constructed!')
     heuristic = HeuristicMaxClique(graph)
     heuristic_clique = heuristic.run()
-    heuristic_clique_size = int(sum(heuristic_clique))
+    heuristic_clique_size = int(sum(heuristic_clique)) - 1
     print(f'Found heuristic solution! ({heuristic_clique_size})')
     bnb_algorithm = BranchAndBound(problem=problem_handler,
                                    initial_solution=heuristic_clique, time_limit=time_limit,
@@ -79,15 +79,15 @@ def run_tests(benchmarks: list, time_limit: int = None, abs_tol: float = 1e-4,
     for filepath in benchmarks:
         try:
             result_dct = run_test(filepath, abs_tol=abs_tol, time_limit=time_limit)
+            result_dct['true_clique_size'] = benchmarks[filepath]
+            pprint(result_dct)
+            results.append(result_dct)
         except TimeoutException as timeout:
             print(filepath, timeout.msg)
             results.append(dict(benchmark=filepath.split('/')[-1],
                                 bnb_exec_time=timeout.msg,
-                                bnb_clique_size=timeout.best_clique_size))
-            continue
-        result_dct['true_clique_size'] = benchmarks[filepath]
-        print(result_dct)
-        results.append(result_dct)
+                                bnb_clique_size=timeout.best_clique_size,
+                                true_clique_size=benchmarks[filepath]))
         result_df = pd.DataFrame(results)
         result_df.to_csv(out_folder + f'results_{suffix}.csv')
         result_df.to_excel(out_folder + f'results_{suffix}.xlsx')
@@ -96,6 +96,6 @@ def run_tests(benchmarks: list, time_limit: int = None, abs_tol: float = 1e-4,
 
 if __name__ == '__main__':
     benchmarks = dict(**EASY,
-                      **MEDIUM
-                      )
-    run_tests(benchmarks=benchmarks, time_limit=3600, suffix='EASY_MEDIUM')
+                      **MEDIUM)
+    run_tests(benchmarks=benchmarks, time_limit=5400, suffix='EASY_MEDIUM_NEW',
+              abs_tol=1e-4)

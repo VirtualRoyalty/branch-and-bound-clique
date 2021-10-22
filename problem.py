@@ -14,10 +14,6 @@ class ProblemHandler:
     ]
 
     def __init__(self, graph: nx.Graph, is_integer: bool = False, verbose: bool = False):
-        """
-        :param graph: the graph for the max clique problem
-        :param is_integer: if True then LP mode else ILP mode for cplex solver
-        """
         self.problem = None
         self.graph = graph
         self.is_integer = is_integer
@@ -54,15 +50,16 @@ class ProblemHandler:
         else:
             raise "Problem is not constructed yet"
 
-    def design_problem(self):
+    def design_problem(self, filtered_limit: int = 20000):
         # specify numeric type for ILP/LP problem
         one = 1 if self.is_integer else 1.0
         zero = 0 if self.is_integer else 0.0
         # get not connected edges and list of independent sets
         not_connected = self.get_complement_edges(self.graph)
         independent_sets = self.get_independent_sets(self.graph, strategies=self.STRATEGIES)
-        # define num of decision vars by num of nodes
-        # and num of constraints as num of not connected edges + num of found ind sets
+        print(f'PAIRS: {len(not_connected)} IND SETS: {len(independent_sets)}')
+        not_connected = self.filter_repeated(not_connected, independent_sets)
+        print(f'FILTERED PAIRS: {len(not_connected)}')
         nodes = sorted(self.graph.nodes())
         n_vars = self.graph.number_of_nodes()
         n_constraints = len(not_connected) + len(independent_sets)
@@ -116,6 +113,21 @@ class ProblemHandler:
         return complement_edges
 
     @staticmethod
+    def filter_repeated(pairs, ind_sets, filtered_limit: int = 500000) -> list:
+        new_pairs = []
+        for _iter, pair in enumerate(pairs):
+            _flag = True
+            if _iter < filtered_limit:
+                for ind_set in ind_sets:
+                    if pair[0] in ind_set:
+                        if pair[1] in ind_set:
+                            _flag = False
+                            break
+            if _flag:
+                new_pairs.append(pair)
+        return new_pairs
+
+    @staticmethod
     def get_independent_sets(graph: nx.Graph, strategies: list,
                              n_iter: int = 50, min_set_size: int = 3) -> list:
         independent_sets = set()
@@ -135,5 +147,6 @@ class ProblemHandler:
                     if len(colored_nodes) >= min_set_size:
                         colored_nodes = tuple(sorted(colored_nodes))
                         independent_sets.add(colored_nodes)
-        independent_sets = list(independent_sets)
+        # store in each ind_set in set() for faster pair constraint filtering
+        independent_sets = [set(ind_set) for ind_set in independent_sets]
         return independent_sets
