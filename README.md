@@ -2,6 +2,16 @@
 
 Implementation of Branch-n-Bound algorithm for Max Clique Problem via cplex-solver
 
+For tests execution run command:
+```python
+    python run_test.py
+```
+
+For certain benchmark execution run (e.g. *benchmarks/DIMACS_all_ascii/C125.9.clq*):
+```python
+python main.py --filepath benchmarks/DIMACS_all_ascii/C125.9.clq 
+```
+
 |    | benchmark          |   heuristic_clique_size |   bnb_clique_size | is_bnb_solution_clique   | bnb_exec_time   |   bnb_exec_time_seconds |   bnb_call_count |   bnb_max_recursion_depth |   true_clique_size |
 |---:|:-------------------|------------------------:|------------------:|:-------------------------|:----------------|------------------------:|-----------------:|--------------------------:|-------------------:|
 |  0 | johnson8-2-4.clq   |                       4 |                 4 | True                     | 0min 0.0sec     |               0.0188313 |                1 |                         0 |                  4 |
